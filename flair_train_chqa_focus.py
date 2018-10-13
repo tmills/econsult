@@ -12,7 +12,7 @@ import sys
 
 from flair.data import TaggedCorpus
 from flair.data_fetcher import NLPTaskDataFetcher, NLPTask
-from flair.embeddings import TokenEmbeddings, WordEmbeddings, StackedEmbeddings
+from flair.embeddings import TokenEmbeddings, WordEmbeddings, StackedEmbeddings, CharacterEmbeddings
 from typing import List
 
 
@@ -43,7 +43,7 @@ def main(args):
         WordEmbeddings('glove'),
 
         # comment in this line to use character embeddings
-        # CharacterEmbeddings(),
+        CharacterEmbeddings(),
 
         # comment in these lines to use contextual string embeddings
         # CharLMEmbeddings('news-forward'),
@@ -67,7 +67,7 @@ def main(args):
     trainer: SequenceTaggerTrainer = SequenceTaggerTrainer(tagger, corpus, test_mode=True)
 
     # 7. start training
-    trainer.train('resources/taggers/chqa-focus',
+    trainer.train('resources/taggers/chqa-focus-glove+char',
                 learning_rate=0.1,
                 mini_batch_size=32,
                 max_epochs=150)
