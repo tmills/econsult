@@ -15,18 +15,10 @@ from flair.data_fetcher import NLPTaskDataFetcher, NLPTask
 from flair.embeddings import TokenEmbeddings, WordEmbeddings, StackedEmbeddings
 from typing import List
 
-# def read_data(data_dir):
-#     sentences_train = NLPTaskDataFetcher.read_conll_sequence_labeling_data(join(data_folder, 'train.txt') )
-#     # sample dev data from train
-#     sentences_dev: List[Sentence] = [sentences_train[i] for i in NLPTaskDataFetcher.__sample()]
-#     sentences_train = [x for x in sentences_train if x not in sentences_dev]
-#     sentences_test = NLPTaskDataFetcher.read_conll_sequence_labeling_data(join(data_folder, 'test.txt') )
-
-#     return TaggedCorpus(sentences_train, sentences_dev, sentences_test)
 
 def main(args):
     if len(args) < 1:
-        sys.stderr.write('One required argument: <data dir>')
+        sys.stderr.write('One required argument: <data dir>\n')
         sys.exit(-1)
     
     # 1. get the corpus
@@ -35,7 +27,7 @@ def main(args):
         column_format,
         'train.txt',
         'test.txt',
-        'test.txt')
+        dev_file='dev.txt')
     print(corpus)
 
     # 2. what tag do we want to predict?
