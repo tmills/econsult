@@ -12,6 +12,7 @@ def main(args):
         sys.exit(-1)
     
     focus_out = open(join(args[1], 'focus.conll'), 'w')
+    qt_out = open(join(args[1], 'qt.flair'), 'w')
 
     import xml.etree.ElementTree as ET
     tree = ET.parse(args[0])
@@ -49,12 +50,13 @@ def main(args):
             q_end = int(question.attrib['len']) + q_start
             q_text = text[q_start:q_end]
             for sub_q in question.findall('SubQuestion'):
-                q_cat = sub_q.attrib['qt']
+                q_cat = sub_q.attrib['qt'].text
 
                 print('Question \'%s\' has type %s' % (q_text, q_cat))
 
         focus_out.write('\n')
     focus_out.close()
+    qt_out.close()
 
 if __name__ == '__main__':
     main(sys.argv[1:])
