@@ -46,8 +46,8 @@ def main(args):
         # CharacterEmbeddings(),
 
         # comment in these lines to use contextual string embeddings
-        CharLMEmbeddings('news-forward'),
-        CharLMEmbeddings('news-backward'),
+        # CharLMEmbeddings('news-forward'),
+        # CharLMEmbeddings('news-backward'),
     ]
 
     embeddings: StackedEmbeddings = StackedEmbeddings(embeddings=embedding_types)
