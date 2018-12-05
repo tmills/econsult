@@ -26,13 +26,17 @@ This will create a file called focus.conll in the chqa directory. To train the f
 Download the QDE dataset: https://lhncbc.nlm.nih.gov/publication/pub9272 (Question decomposition data) and run:
 
 ```unzip <qde zip file download>```
+
 ```mkdir qde```
+
 ```python qdecomp2conll.py <unzipped qde directory> qde```
 
 This will create a file called qde.conll in the qde directory. To split into train, test, and dev set:
 
 ```head -32792 qde.conll > train.txt```
+
 ```tail -10910 qde.conll > test.txt```
+
 ```tail -21869 qde.conll | head -10959 > dev.txt```
 
 ## Training
