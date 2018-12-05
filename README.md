@@ -12,6 +12,7 @@ Dependencies are listed in pip. python3.6 and pytorch 0.4.1 are minimum requirem
 Download the CHQA dataset: https://lhncbc.nlm.nih.gov/project/consumer-health-question-answering (Question type data) and:
 
 ```mkdir chqa```
+
 ```python chqa2conll.py <question type xml file> chqa```
 
 This will create a file called focus.conll in the chqa directory. To train the flair models we need to split this into a train, test, and dev set. Here is one way to do so:
