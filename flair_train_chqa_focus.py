@@ -9,10 +9,11 @@
 #######################
 
 import sys
+from pathlib import Path
 
 from flair.data import TaggedCorpus
 from flair.data_fetcher import NLPTaskDataFetcher, NLPTask
-from flair.embeddings import TokenEmbeddings, WordEmbeddings, StackedEmbeddings, CharacterEmbeddings, CharLMEmbeddings
+from flair.embeddings import TokenEmbeddings, WordEmbeddings, StackedEmbeddings, CharacterEmbeddings, CharLMEmbeddings, BertEmbeddings, ELMoEmbeddings
 from typing import List
 
 
@@ -23,11 +24,9 @@ def main(args):
     
     # 1. get the corpus
     column_format = {0:'word', 1:'pos', 2:'ner'}
-    corpus: TaggedCorpus = NLPTaskDataFetcher.fetch_column_corpus(args[0],
-        column_format,
-        'train.txt',
-        'test.txt',
-        dev_file='dev.txt')
+    corpus: TaggedCorpus = NLPTaskDataFetcher.load_column_corpus(Path(args[0]),
+        column_format, 
+        tag_to_biloes='ner')
     print(corpus)
 
     # 2. what tag do we want to predict?
@@ -48,6 +47,12 @@ def main(args):
         # comment in these lines to use contextual string embeddings
         # CharLMEmbeddings('news-forward'),
         # CharLMEmbeddings('news-backward'),
+
+        # comment in these lines to use Bert embeddings
+        BertEmbeddings(),
+
+        # comment in these lines to use Elmo embeddings
+        # ELMoEmbeddings(),
     ]
 
     embeddings: StackedEmbeddings = StackedEmbeddings(embeddings=embedding_types)
@@ -62,12 +67,12 @@ def main(args):
                                             use_crf=True)
 
     # 6. initialize trainer
-    from flair.trainers import SequenceTaggerTrainer
+    from flair.trainers import ModelTrainer
 
-    trainer: SequenceTaggerTrainer = SequenceTaggerTrainer(tagger, corpus, test_mode=False)
+    trainer: ModelTrainer = ModelTrainer(tagger, corpus)
 
     # 7. start training
-    trainer.train('resources/taggers/temp',
+    trainer.train('resources/taggers/glove+bert',
                 learning_rate=0.1,
                 mini_batch_size=32,
                 max_epochs=150)
