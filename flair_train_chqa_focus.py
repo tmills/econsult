@@ -23,7 +23,7 @@ def main(args):
         sys.exit(-1)
     
     # 1. get the corpus
-    column_format = {0:'word', 1:'pos', 2:'ner'}
+    column_format = {0:'word', 1:'pos', 2:'cui', 3:'ner'}
     corpus: TaggedCorpus = NLPTaskDataFetcher.load_column_corpus(Path(args[0]),
         column_format, 
         tag_to_biloes='ner')

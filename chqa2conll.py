@@ -5,6 +5,7 @@ import sys
 
 import nltk
 from nltk import pos_tag, word_tokenize
+from ctakes_rest import process_sentence
 
 def main(args):
     if len(args) < 2:
@@ -21,6 +22,12 @@ def main(args):
     for request in root.findall('Request'):
         text = request.find('Text').text
         tagged = pos_tag(word_tokenize(text))
+        cuis = process_sentence(text)
+        cui_start_map = {}
+        cui_end_map = {}
+        for cui,begin,end in cuis:
+            cui_start_map[begin] = cui
+            cui_end_map[end] = cui
 
         focus = request.find('Focus')
         if not focus is None:
@@ -30,6 +37,7 @@ def main(args):
         
         start_ind = 0
         prev_label = 'O'
+        prev_cui_label = 'O'
         for tag in tagged:
             # tag[0] is the word and tag[1] is the POS
             token_start_ind = text.find(tag[0], start_ind)
@@ -41,8 +49,20 @@ def main(args):
                 label = 'I-FOCUS'
             else:
                 label = 'O'
-            focus_out.write('%s\t%s\t%s\n' % (tag[0], tag[1], label) )
+
+            cui_label = 'O'
+            if token_start_ind in cui_start_map:
+                cui_label = 'B-%s' % (cui_start_map[token_start_ind])
+            elif prev_cui_label.startswith('B') or prev_cui_label.startswith('I'):
+                cui_label = prev_cui_label.replace('B', 'I')
+
+            focus_out.write('%s\t%s\t%s\t%s\n' % (tag[0], tag[1], cui_label, label) )
+
+            if token_end_ind in cui_end_map:
+                cui_label = 'O'
+
             prev_label = label
+            prev_cui_label = cui_label
 
         for question in request.findall('Question'):
             qid = question.attrib['id']
@@ -50,9 +70,9 @@ def main(args):
             q_end = int(question.attrib['len']) + q_start
             q_text = text[q_start:q_end]
             for sub_q in question.findall('SubQuestion'):
-                q_cat = sub_q.attrib['qt'].text
+                q_cat = sub_q.attrib['qt']
 
-                print('Question \'%s\' has type %s' % (q_text, q_cat))
+                # print('Question \'%s\' has type %s' % (q_text, q_cat))
 
         focus_out.write('\n')
     focus_out.close()
