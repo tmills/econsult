@@ -15,16 +15,23 @@ from flair.data import TaggedCorpus
 from flair.data_fetcher import NLPTaskDataFetcher, NLPTask
 from flair.embeddings import TokenEmbeddings, WordEmbeddings, StackedEmbeddings, CharacterEmbeddings, CharLMEmbeddings, BertEmbeddings, ELMoEmbeddings
 from typing import List
+import argparse
+
+parser = argparse.ArgumentParser(description='Flair trainer for consumer health questions')
+parser.add_argument('data_file', nargs=1, help='Conll formatted file with gold standard data')
+parser.add_argument('-t', '--type', required=True, choices=['qde', 'chqa'])
 
 
 def main(args):
-    if len(args) < 1:
-        sys.stderr.write('One required argument: <data dir>\n')
-        sys.exit(-1)
-    
+    args = parser.parse_args()
+
     # 1. get the corpus
-    column_format = {0:'word', 1:'pos', 2:'cui', 3:'ner'}
-    corpus: TaggedCorpus = NLPTaskDataFetcher.load_column_corpus(Path(args[0]),
+    if args.type == 'chqa':
+        column_format = {0:'word', 1:'pos', 2:'cui', 3:'ner'}
+    elif args.type == 'qde':
+        column_format = {0:'word', 1:'pow', 2:'ner'}
+
+    corpus: TaggedCorpus = NLPTaskDataFetcher.load_column_corpus(Path(args.data_file[0]),
         column_format, 
         tag_to_biloes='ner')
     print(corpus)

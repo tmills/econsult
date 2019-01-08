@@ -34,11 +34,11 @@ Download the QDE dataset: https://lhncbc.nlm.nih.gov/publication/pub9272 (Questi
 
 This will create a file called qde.conll in the qde directory. To split into train, test, and dev set:
 
-```head -32792 qde.conll > train.txt```
+```head -37981 qde.conll > train.txt```
 
-```tail -10910 qde.conll > test.txt```
+```tail -10891 qde.conll > test.txt```
 
-```tail -21869 qde.conll | head -10959 > dev.txt```
+```tail -16280 qde.conll | head -5389 > dev.txt```
 
 ## Training
 Without changes, the default script runs a sequence model with glove embeddings. See the flair repo for how to modify the model to run with more sophisticated pre-trained/contextualized embeddings. The first run with any new model may take a while to download the model resources.

@@ -42,7 +42,8 @@ def read_brat_file(ann_fn):
                     ent_start_ind = int(m.group(3))
                     ent_end_ind = int(m.group(4))
                     ent_text = m.group(5)
-                    if ent_type == 'Focus' or ent_type == 'Coordination': 
+                    ## The following are not sentence-level annotations so may overlap:
+                    if ent_type == 'Focus' or ent_type == 'Coordination' or ent_type == 'Exemplification': 
                         continue
                     ents[ent_id] = Entity(ent_type, ent_start_ind, ent_end_ind)
         for ent_id in ents.keys():
