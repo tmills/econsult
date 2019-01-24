@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.6
 
-from os.path import join, isfile
+from os.path import join, isfile, basename
 import sys
 import glob
 import re
@@ -46,23 +46,22 @@ def read_brat_file(ann_fn):
                     if ent_type == 'Focus' or ent_type == 'Coordination' or ent_type == 'Exemplification': 
                         continue
                     ents[ent_id] = Entity(ent_type, ent_start_ind, ent_end_ind)
-        for ent_id in ents.keys():
-            if ent_id in atts:
-                ents[ent_id].cat += '-%s' % (atts[ent_id].cat)
     return ents, atts
 
 
 def main(args):
-    if len(args) < 2:
-        sys.stderr.write('Two required argument: <chqa dir> <output directory>\n')
+    if len(args) < 3:
+        sys.stderr.write('Two required argument: <chqa dir> <conll-format output directory> <flair-format output directory>\n')
         sys.exit(-1)
     
     # get all .txt files from the chqa directory:
     txt_files = glob.glob(join(args[0], '*.txt'))
     fout = open(join(args[1], 'qde.conll'), 'w')
+    flair_out = open(join(args[2], 'sentences.flair'), 'w')
 
     for txt_fn in txt_files:
-        ann_fn = txt_fn[:-3] + 'ann'
+        fn_prefix = txt_fn[:-4]
+        ann_fn = fn_prefix + '.ann'
         if not isfile(ann_fn): continue
 
         print('Processing file %s which has corresponding file %s' % (txt_fn, ann_fn))
@@ -71,19 +70,21 @@ def main(args):
             text = myfile.read()
         
         ents, atts = read_brat_file(ann_fn)
+
         tagged = pos_tag(word_tokenize(text))
-        # section_starts = ()
-        # section_ends = ()
-        # section_names = ()
+
         awaited_starts = {}
         for ent_id in ents.keys():
             ent = ents[ent_id]
-            # section_starts.append(ent.start)
-            # section_ends.append(ent.end)
+
+            ## Write to Flair format:
+            flair_out.write('__label__%s %s\n' % (ent.cat.lower(), text[ent.start:ent.end]))
+            
+
+            ## Prepare for writing conll format
             name = ent.cat
             if ent_id in atts:
                 name += '-%s' % (atts[ent_id].cat)
-            # section_names.append(name)
             awaited_starts[ent.start] = ent_id
 
         start_ind = 0
@@ -120,14 +121,7 @@ def main(args):
         # break
         fout.write('\n')
     fout.close()
-
-
-
-
-
-        
-
-                
+    flair_out.close()
 
 
 if __name__ == '__main__':
