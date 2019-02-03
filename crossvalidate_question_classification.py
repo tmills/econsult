@@ -1,5 +1,6 @@
 import sys
-from os.path import join, dirname, basename
+import os
+from os.path import join, dirname, basename, isfile
 from typing import List
 
 from flair.data import TaggedCorpus, Sentence
@@ -49,6 +50,7 @@ def main(args):
 
     # 6. iterate over folds:
     total_acc = 0
+    fold = 1
     for train_index, test_index in kf.split(corpus.train):
         # 6a. initialize the text classifier trainer
         classifier = TextClassifier(document_embeddings, label_dictionary=label_dict, multi_label=False)
@@ -63,8 +65,13 @@ def main(args):
 
         trainer = ModelTrainer(classifier, split_corpus)
 
-        model_out = 'resources/classifiers/sentence-classification/glove_xfold'
-        results = trainer.train(model_out,
+        model_dir = 'resources/classifiers/sentence-classification/glove_xfold'
+        model_file = join(model_dir, 'best-model.pt')
+        if isfile(model_file):
+            print('Removing existing model file %s' % (model_file))
+            os.remove(model_file)
+
+        results = trainer.train(model_dir,
                 learning_rate=0.1,
                 mini_batch_size=32,
                 anneal_factor=0.5,
@@ -72,10 +79,11 @@ def main(args):
                 max_epochs=100)
         fold_acc = results['test_score']
         total_acc += fold_acc
-        print("Finished fold with accuracy %f" % (fold_acc))
+        print(f"Finished fold {fold} with accuracy {fold_acc}")
+        fold += 1
     total_acc /= num_folds
 
-    print("FInished with total cross-fold accuracy of %f" % (total_acc))
+    print("Finished with total cross-fold accuracy of %f" % (total_acc))
 
 
 
