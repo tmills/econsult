@@ -14,13 +14,13 @@ from os.path import join
 
 from flair.data import TaggedCorpus
 from flair.data_fetcher import NLPTaskDataFetcher, NLPTask
-from flair.embeddings import WordEmbeddings, FlairEmbeddings, DocumentLSTMEmbeddings
+from flair.embeddings import WordEmbeddings, FlairEmbeddings, DocumentLSTMEmbeddings, ELMoEmbeddings
 from flair.models import TextClassifier
 from flair.trainers import ModelTrainer
 import argparse
 
 parser = argparse.ArgumentParser(description='Flair trainer for classifying sentences in consumer health questions')
-parser.add_argument('data_dir', nargs=1, help='IMDB-formatted directory with gold standard data')
+parser.add_argument('data_dir', nargs=1, help='Flair-formatted directory with gold standard data')
 
 def main(args):
     args = parser.parse_args()
@@ -39,15 +39,16 @@ def main(args):
     word_embeddings = [WordEmbeddings('glove'),
 
                     # comment in flair embeddings for state-of-the-art results 
-                    FlairEmbeddings('news-forward'),
-                    FlairEmbeddings('news-backward'),
+                    # FlairEmbeddings('news-forward'),
+                    # FlairEmbeddings('news-backward'),
+                    # ELMoEmbeddings()
                     ]
 
     # 4. init document embedding by passing list of word embeddings
     document_embeddings: DocumentLSTMEmbeddings = DocumentLSTMEmbeddings(word_embeddings,
-                                                                        hidden_size=512,
+                                                                        hidden_size=128,
                                                                         reproject_words=True,
-                                                                        reproject_words_dimension=256,
+                                                                        reproject_words_dimension=64,
                                                                         )
 
     # 5. create the text classifier
@@ -57,7 +58,7 @@ def main(args):
     trainer = ModelTrainer(classifier, corpus)
 
     # 7. start the training
-    model_out = 'resources/classifiers/sentence-classification/glove+flair'
+    model_out = 'resources/classifiers/sentence-classification/glove'
     trainer.train(model_out,
                 learning_rate=0.1,
                 mini_batch_size=32,
