@@ -1,11 +1,11 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3.7
 
 from os.path import join
 import sys
 
 import nltk
 from nltk import pos_tag, word_tokenize
-from ctakes_rest import process_sentence
+from ctakes_rest import get_cui_maps
 
 def main(args):
     if len(args) < 2:
@@ -22,12 +22,7 @@ def main(args):
     for request in root.findall('Request'):
         text = request.find('Text').text
         tagged = pos_tag(word_tokenize(text))
-        cuis = process_sentence(text)
-        cui_start_map = {}
-        cui_end_map = {}
-        for cui,begin,end in cuis:
-            cui_start_map[begin] = cui
-            cui_end_map[end] = cui
+        cui_start_map, cui_end_map = get_cui_maps(text)
 
         focus = request.find('Focus')
         if not focus is None:
@@ -38,6 +33,7 @@ def main(args):
         start_ind = 0
         prev_label = 'O'
         prev_cui_label = 'O'
+        cur_cui_end = -1
         for tag in tagged:
             # tag[0] is the word and tag[1] is the POS
             token_start_ind = text.find(tag[0], start_ind)
@@ -52,9 +48,14 @@ def main(args):
 
             cui_label = 'O'
             if token_start_ind in cui_start_map:
-                cui_label = 'B-%s' % (cui_start_map[token_start_ind])
-            elif prev_cui_label.startswith('B') or prev_cui_label.startswith('I'):
-                cui_label = prev_cui_label.replace('B', 'I')
+                cui_label = cui_start_map[token_start_ind][0]
+                cur_cui_end = cui_start_map[token_start_ind][1]
+            elif cur_cui_end > token_end_ind:
+                # This is a special case for where tokenization differs between python and ctakes and
+                # cui borders don't align with word borders
+                cui_label = 'O'
+            elif not prev_cui_label == 'O':
+                cui_label = prev_cui_label
 
             focus_out.write('%s\t%s\t%s\t%s\n' % (tag[0], tag[1], cui_label, label) )
 

@@ -86,6 +86,5 @@ def main(args):
     print("Finished with total cross-fold accuracy of %f" % (total_acc))
 
 
-
 if __name__ == '__main__':
     main(sys.argv[1:])
