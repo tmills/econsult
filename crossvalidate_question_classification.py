@@ -13,8 +13,10 @@ import argparse
 from sklearn.model_selection import KFold
 import numpy as np
 
+from backoff import BackOffEmbeddings
+
 parser = argparse.ArgumentParser(description='Flair trainer for classifying sentences in consumer health questions')
-parser.add_argument('-d', '--data-file', help='Flair-formatted directory with gold standard data')
+parser.add_argument('-f', '--data-file', required=True, help='Flair-formatted file with gold standard data')
 parser.add_argument('-k', '--num-folds', required=False, default=5, help='Number of folds to use in cross-validation')
 
 def main(args):
@@ -28,8 +30,9 @@ def main(args):
     label_dict = corpus.make_label_dictionary()
 
     # 3. make a list of word embeddings
-    word_embeddings = [WordEmbeddings('glove'),
-
+    word_embeddings = [#WordEmbeddings('glove'),
+                    BackOffEmbeddings( WordEmbeddings('glove'),
+                                       WordEmbeddings('/home/tmill/mnt/r/resources/word2vec/cui2vec.npy')),
                     # comment in flair embeddings for state-of-the-art results 
                     # FlairEmbeddings('news-forward'),
                     # FlairEmbeddings('news-backward'),

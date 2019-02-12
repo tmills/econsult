@@ -15,14 +15,14 @@ def main(args):
         sys.stderr.write('Two required argument: <chqa dir> <conll-format output directory> <flair-format output directory>\n')
         sys.exit(-1)
     
-    labels = ('Comorbidity', 'DiagnosisAtt', 'Family_History', 'ISF', 'LifeStyle', 'Symptom', 'TestAtt', 'TreatmentAtt')
+    attributes = ('Comorbidity', 'DiagnosisAtt', 'Family_History', 'ISF', 'LifeStyle', 'Symptom', 'TestAtt', 'TreatmentAtt')
 
     # get all .txt files from the chqa directory:
     txt_files = glob.glob(join(args[0], '*.txt'))
     fout = open(join(args[1], 'qde.conll'), 'w')
     flair_out = open(join(args[2], 'sentences.flair'), 'w')
     # Create a map from labels to the file pointer for the file for that label:
-    bg_out = {label:open(join(args[2], f'bg-{label.lower()}.flair'), 'w') for label in labels}
+    bg_out = open(join(args[2], 'bgs.flair'), 'w')
 
     for txt_fn in txt_files:
         fn_prefix = txt_fn[:-4]
@@ -48,13 +48,16 @@ def main(args):
             
             ## write BG sentences to flair format:
             if ent.cat.lower() == 'background':
-                labels = {label:False for label in labels}
+                labels = {label:False for label in attributes}
                 if ent_id in atts:
                     for att in atts[ent_id]:
                         labels[att.cat] = True
                 
-                for label in labels:
-                    bg_out[label].write('__label__%s %s\n' % (labels[label], text[ent.start:ent.end]))
+                for label in attributes:
+                    if labels[label]:
+                        bg_out.write('__label__%s ' % (label))
+                
+                bg_out.write('%s\n' % (text[ent.start:ent.end]))
 
             ## Prepare for writing conll format
             awaited_starts[ent.start] = ent_id
@@ -115,7 +118,7 @@ def main(args):
         fout.write('\n')
     fout.close()
     flair_out.close()
-    [fp.close() for fp in bg_out.values()]
+    bg_out.close()
 
 
 if __name__ == '__main__':
