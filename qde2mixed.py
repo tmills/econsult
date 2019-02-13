@@ -13,12 +13,13 @@ def main(args):
         sys.stderr.write('Two required argument: <chqa dir> <flair-format output directory>\n')
         sys.exit(-1)
     
-    labels = ('Comorbidity', 'DiagnosisAtt', 'Family_History', 'ISF', 'LifeStyle', 'Symptom', 'TestAtt', 'TreatmentAtt')
+    attributes = ('Comorbidity', 'DiagnosisAtt', 'Family_History', 'ISF', 'LifeStyle', 'Symptom', 'TestAtt', 'TreatmentAtt')
 
     # get all .txt files from the chqa directory:
     txt_files = glob.glob(join(args[0], '*.txt'))
     flair_out = open(join(args[1], 'mixed-sentences.flair'), 'w')
-    out_dir = join(args[1], 'mixed-bg')
+    bg_out = open(join(args[1], 'mixed-bg.flair'), 'w')
+    out_dir = join(args[1], 'mixed-sentences')
     if not exists(out_dir):
         os.makedirs(out_dir)
     train_out = open(join(out_dir, 'train.txt'), 'w')
@@ -64,6 +65,19 @@ def main(args):
             line = '__label__%s %s\n' % (ent.cat.lower(), ent_text)
             fout.write(line)
             flair_out.write(line)
+
+            ## write BG sentences to flair format:
+            if ent.cat.lower() == 'background':
+                labels = {label:False for label in attributes}
+                if ent_id in atts:
+                    for att in atts[ent_id]:
+                        labels[att.cat] = True
+                
+                for label in attributes:
+                    if labels[label]:
+                        bg_out.write('__label__%s ' % (label))
+                
+                bg_out.write('%s\n' % (ent_text))
 
 if __name__ == '__main__':
     main(sys.argv[1:])
