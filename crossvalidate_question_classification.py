@@ -19,9 +19,34 @@ from backoff import BackOffEmbeddings
 parser = argparse.ArgumentParser(description='Flair trainer for classifying sentences in consumer health questions')
 parser.add_argument('-f', '--data-file', required=True, help='Flair-formatted file with gold standard data')
 parser.add_argument('-k', '--num-folds', required=False, default=5, help='Number of folds to use in cross-validation')
+modes = ('glove', 'flair', 'cui_svd', 'cui_proj')
+parser.add_argument('-m', '--method', required=True, choices=modes, help='Method to use: glove=Glove embeddings alone, flair=glove+Flair contextual embeddings, cui_svd=glove+cuis reduced with SVD, cui_proj=glove+cuis projected with mikolov')
+# parser.add_argument('-m', '--multi', default=False, action="store_true", help='Whether this is a multi-label problem or not')
 
 def main(args):
     args = parser.parse_args()
+
+    # 0. Make a list of word embeddings
+    if args.method == 'glove':
+        word_embeddings = [WordEmbeddings('glove')]
+    elif args.method == 'flair':
+        word_embeddings = [WordEmbeddings('glove'),
+                    FlairEmbeddings('news-forward'),
+                    FlairEmbeddings('news-backward')]
+    elif args.method == 'cui_svd':
+        word_embeddings = [BackOffEmbeddings( WordEmbeddings('glove'),
+                                              WordEmbeddings('resources/embeddings/cui2vec100.npy'))]
+    elif args.method == 'cui_proj':
+        word_embeddings = [BackOffEmbeddings( WordEmbeddings('glove'),
+                                              WordEmbeddings('resources/embeddings/cui2vec_projected_100.gensim'))]
+    else:
+        raise Exception("Received optino for method %s that cannot be interpreted." % (args.method))
+
+    if 'bg' in args.data_file:
+        multi = True
+        print("Running in multiple label setting because 'bg' was in the data file name %s" % (args.data_file))
+    else:
+        multi = False
 
     # 1. get the corpus
     sents: List[Sentence] = NLPTaskDataFetcher.read_text_classification_file(args.data_file)
@@ -30,21 +55,17 @@ def main(args):
     # 2. create the label dictionary
     label_dict = corpus.make_label_dictionary()
 
-    # 3. make a list of word embeddings
-
-    # 4. init document embedding by passing list of word embeddings
-
-    # 5. split the training data into folds
+    # 3. split the training data into folds
     num_folds = args.num_folds
     seed = 719
     kf = KFold(n_splits=num_folds, random_state=seed)
     kf.get_n_splits()
 
-    # 6. iterate over folds:
+    # 4. iterate over folds:
     total_acc = 0
     fold = 1
     for train_index, test_index in kf.split(corpus.train):
-        # 6a. initialize the text classifier trainer
+        # 4a. initialize the text classifier trainer
         split_traindev = np.array(corpus.train)[train_index].tolist()
         traindev_size = len(split_traindev)
         train_dev_splitpoint = int(0.9*traindev_size)
@@ -57,29 +78,16 @@ def main(args):
         print("After split, size of splits: train=%d, dev=%d, test=%d" % 
                 (len(split_train), len(split_dev), len(split_test)))
 
+        # 4b. do training:
         with tempfile.TemporaryDirectory() as model_dir:
-            word_embeddings = [#WordEmbeddings('glove'),
-                    BackOffEmbeddings( WordEmbeddings('glove'),
-                                       WordEmbeddings('/home/data/cui2vec100.npy')),
-                    # comment in flair embeddings for state-of-the-art results 
-                    # FlairEmbeddings('news-forward'),
-                    # FlairEmbeddings('news-backward'),
-                    # ELMoEmbeddings()
-                    ]
+            # init document embedding by passing list of word embeddings
             document_embeddings: DocumentLSTMEmbeddings = DocumentLSTMEmbeddings(word_embeddings,
                                                                         hidden_size=128,
                                                                         reproject_words=True,
                                                                         reproject_words_dimension=64,
                                                                         )
-            classifier = TextClassifier(document_embeddings, label_dictionary=label_dict, multi_label=True)
+            classifier = TextClassifier(document_embeddings, label_dictionary=label_dict, multi_label=multi)
             trainer = ModelTrainer(classifier, split_corpus)
-            # model_dir = 'resources/classifiers/sentence-classification/glove_xfold'
-            # model_file = join(model_dir, 'best-model.pt')
-            # if isfile(model_file):
-            #     print('Removing existing model file %s' % (model_file))
-            #     os.remove(model_file)
-            #     model_file = join(model_dir, 'final-model.pt')
-            #     os.remove(model_file)
 
             results = trainer.train(model_dir,
                     learning_rate=0.1,
