@@ -19,7 +19,7 @@ from backoff import BackOffEmbeddings
 parser = argparse.ArgumentParser(description='Flair trainer for classifying sentences in consumer health questions')
 parser.add_argument('-f', '--data-file', required=True, help='Flair-formatted file with gold standard data')
 parser.add_argument('-k', '--num-folds', required=False, default=5, help='Number of folds to use in cross-validation')
-modes = ('glove', 'flair', 'cui_svd', 'cui_proj', 'mimic')
+modes = ('glove', 'flair', 'cui_svd', 'cui_proj', 'mimic', 'cui2vec')
 parser.add_argument('-m', '--method', required=True, choices=modes, help='Method to use: glove=Glove embeddings alone, flair=glove+Flair contextual embeddings, cui_svd=glove+cuis reduced with SVD, cui_proj=glove+cuis projected with mikolov')
 # parser.add_argument('-m', '--multi', default=False, action="store_true", help='Whether this is a multi-label problem or not')
 
@@ -38,9 +38,12 @@ def main(args):
                                               WordEmbeddings('resources/embeddings/cui2vec100.npy'))]
     elif args.method == 'cui_proj':
         word_embeddings = [BackOffEmbeddings( WordEmbeddings('glove'),
-                                              WordEmbeddings('resources/embeddings/cui2vec_projected_100.gensim'))]
+                                              WordEmbeddings('resources/embeddings/cui2vec_projected_100-100.gensim'))]
     elif args.method == 'mimic':
-        word_embeddings = [WordEmbeddings('resources/embeddings/mimic3_mixed.gensim')]
+        word_embeddings = [WordEmbeddings('resources/embeddings/mimic3_mixed_50m.gensim')]
+    elif args.method == 'cui2vec':
+        word_embeddings = [BackOffEmbeddings( WordEmbeddings('glove'),
+                                              WordEmbeddings('resources/embeddings/cui2vec_combined_glove_100dim.gensim'))]
     else:
         raise Exception("Received option for method %s that cannot be interpreted." % (args.method))
 
