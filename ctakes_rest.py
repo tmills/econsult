@@ -56,3 +56,18 @@ def get_cui_maps(sent):
         cui_end_map[end] = (cui, begin)
 
     return cui_start_map, cui_end_map
+
+def get_mixed_sent(sent):
+    import numpy as np
+    # get cuis for this entity:
+    cui_start_map, cui_end_map = get_cui_maps(sent)
+    cui_starts_reversed = list(np.sort(list(cui_start_map.keys())))
+    cui_starts_reversed.reverse()
+
+    # Replace text with cuis
+    for cui_start in cui_starts_reversed:
+        (cui, cui_end) = cui_start_map[cui_start]
+        sent = sent[:cui_start] + cui + sent[cui_end:]
+        # ent_text[cui_start:cui_end] = cui
+    
+    return sent

@@ -19,7 +19,7 @@ from backoff import BackOffEmbeddings
 parser = argparse.ArgumentParser(description='Flair trainer for classifying sentences in consumer health questions')
 parser.add_argument('-f', '--data-file', required=True, help='Flair-formatted file with gold standard data')
 parser.add_argument('-k', '--num-folds', required=False, default=5, help='Number of folds to use in cross-validation')
-modes = ('glove', 'flair', 'cui_svd', 'cui_proj', 'mimic', 'cui2vec')
+modes = ('glove', 'flair', 'cui_svd', 'cui_proj', 'mimic', 'cui2vec', 'mimic_lm')
 parser.add_argument('-m', '--method', required=True, choices=modes, help='Method to use: glove=Glove embeddings alone, flair=glove+Flair contextual embeddings, cui_svd=glove+cuis reduced with SVD, cui_proj=glove+cuis projected with mikolov')
 # parser.add_argument('-m', '--multi', default=False, action="store_true", help='Whether this is a multi-label problem or not')
 
@@ -40,10 +40,14 @@ def main(args):
         word_embeddings = [BackOffEmbeddings( WordEmbeddings('glove'),
                                               WordEmbeddings('resources/embeddings/cui2vec_projected_100-100.gensim'))]
     elif args.method == 'mimic':
-        word_embeddings = [WordEmbeddings('resources/embeddings/mimic3_mixed_50m.gensim')]
+        word_embeddings = [WordEmbeddings('resources/embeddings/mimic3_mixed_embeddings100.gensim')]
     elif args.method == 'cui2vec':
         word_embeddings = [BackOffEmbeddings( WordEmbeddings('glove'),
                                               WordEmbeddings('resources/embeddings/cui2vec_combined_glove_100dim.gensim'))]
+    elif args.method == 'mimic_lm':
+        word_embeddings = [WordEmbeddings('glove'),
+                           FlairEmbeddings('resources/taggers/mimic-forward/best-lm.pt'),
+                           FlairEmbeddings('resources/taggers/mimic-backward/best-lm.pt')]
     else:
         raise Exception("Received option for method %s that cannot be interpreted." % (args.method))
 
@@ -95,8 +99,9 @@ def main(args):
             trainer = ModelTrainer(classifier, split_corpus)
 
             results = trainer.train(model_dir,
+                    embeddings_in_memory=False,
                     learning_rate=0.1,
-                    mini_batch_size=32,
+                    mini_batch_size=128,
                     anneal_factor=0.5,
                     patience=5,
                     max_epochs=100)

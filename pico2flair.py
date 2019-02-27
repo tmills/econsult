@@ -3,6 +3,7 @@ from os.path import join, exists
 import os
 import sys
 
+from ctakes_rest import get_mixed_sent
 
 def main(args):
     if len(args) < 2:
@@ -35,7 +36,11 @@ def main(args):
                 header, label, sent = line.split('|')
 
                 sof.write('__label__%s %s\n' %(label, sent) )
+                
+                mixed_sent = get_mixed_sent(sent)
 
+                mof.write('__label__%s %s\n' % (label, mixed_sent) )
+                
         sof.close()
         mof.close()
                     
