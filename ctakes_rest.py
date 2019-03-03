@@ -37,7 +37,7 @@ def get_cui_maps(sent):
             # Collision: if existing cui with this begin ends later (is longer), skip this cui
             collision_end = cui_start_map[begin][1]
             if collision_end > end:
-                break
+                continue 
             else:
                 # new cui is longer span than old one, so remove the old end from the end map
                 cui_end_map.pop(collision_end, None)
@@ -46,7 +46,7 @@ def get_cui_maps(sent):
             # Collision: if existing cui with this end begins earlier (is longer), skip this cui
             collision_begin = cui_end_map[end][1]
             if collision_begin < begin:
-                break
+                continue 
             else:
                 # new cui is longer span than old one, so remove the old begin from the start map
                 cui_start_map.pop(collision_begin, None)
@@ -60,14 +60,17 @@ def get_cui_maps(sent):
 def get_mixed_sent(sent):
     import numpy as np
     # get cuis for this entity:
-    cui_start_map, cui_end_map = get_cui_maps(sent)
-    cui_starts_reversed = list(np.sort(list(cui_start_map.keys())))
-    cui_starts_reversed.reverse()
+    _, cui_end_map = get_cui_maps(sent)
+    cui_ends_reversed = list(np.sort(list(cui_end_map.keys())))
+    cui_ends_reversed.reverse()
+    last_start = len(sent) + 1
 
     # Replace text with cuis
-    for cui_start in cui_starts_reversed:
-        (cui, cui_end) = cui_start_map[cui_start]
+    for cui_end in cui_ends_reversed:
+        if cui_end > last_start:
+            continue
+        (cui, cui_start) = cui_end_map[cui_end]
         sent = sent[:cui_start] + cui + sent[cui_end:]
-        # ent_text[cui_start:cui_end] = cui
+        last_start = cui_start
     
     return sent
