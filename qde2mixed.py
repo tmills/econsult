@@ -6,7 +6,7 @@ from os.path import join, isfile, exists
 import os
 import sys
 
-from ctakes_rest import get_cui_maps
+from ctakes_rest import get_mixed_sent
 
 def main(args):
     if len(args) < 2:
@@ -50,19 +50,10 @@ def main(args):
             ent = ents[ent_id]
             ent_text = text[ent.start:ent.end]
 
-            # get cuis for this entity:
-            cui_start_map, cui_end_map = get_cui_maps(ent_text)
-            cui_starts_reversed = list(np.sort(list(cui_start_map.keys())))
-            cui_starts_reversed.reverse()
-
-            # Replace text with cuis
-            for cui_start in cui_starts_reversed:
-                (cui, cui_end) = cui_start_map[cui_start]
-                ent_text = ent_text[:cui_start] + cui + ent_text[cui_end:]
-                # ent_text[cui_start:cui_end] = cui
-
+            mixed_sent = get_mixed_sent(ent_text)
+            
             ## Write to Flair format:
-            line = '__label__%s %s\n' % (ent.cat.lower(), ent_text)
+            line = '__label__%s %s\n' % (ent.cat.lower(), mixed_sent)
             fout.write(line)
             flair_out.write(line)
 
@@ -77,7 +68,7 @@ def main(args):
                     if labels[label]:
                         bg_out.write('__label__%s ' % (label))
                 
-                bg_out.write('%s\n' % (ent_text))
+                bg_out.write('%s\n' % (mixed_sent))
 
 if __name__ == '__main__':
     main(sys.argv[1:])

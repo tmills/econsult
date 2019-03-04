@@ -1,3 +1,6 @@
+## Reduces the dimensionality of a cui2vec embeddings file using SVD
+## Should be obsolete since getting download links from Andy Beam.
+
 from scipy.sparse.linalg import svds
 import gensim
 from gensim.models.keyedvectors import BaseKeyedVectors
