@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style> /* set the CSS */
+    body { font: 12px Arial;}
+    path {
+      stroke-width: 2;
+      fill: none;
+    }
+    .axis path, .axis line {
+      fill: none;
+      stroke: grey;
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+  </style>
+</head>
+<body>
+<div id='graphDiv'></div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+    var graphData = {{ data.chart_data | safe }}
+
+    // Set the dimensions of the svg
+    var margin = {top: 30, right: 50, bottom: 30, left: 50};
+    var svgWidth = 600;
+    var svgHeight = 270;
+    var graphWidth = svgWidth - margin.left - margin.right;
+    var graphHeight = svgHeight - margin.top - margin.bottom;
+
+    // Parse the date / time
+    var parseDate = d3.time.format("%Y-%m").parse;
+
+    // Set the ranges
+    var x = d3.time.scale().range([0, graphWidth]);
+    var y = d3.scale.linear().range([graphHeight, 0]);
+
+    // Define the axes
+    var xAxis = d3.svg.axis().scale(x)
+        .orient("bottom").ticks(5);
+    var yAxis = d3.svg.axis().scale(y)
+        .orient("left").ticks(5);
+
+    // Define the cui count lines
+    var c1Line = d3.svg.line()
+        .x(function(d) { return x(d.Date); })
+        .y(function(d) { return y(d.CUI1); });
+
+    var c2Line = d3.svg.line()
+        .x(function(d) { return x(d.Date); })
+        .y(function(d) { return y(d.CUI2); });
+
+    var c3Line = d3.svg.line()
+        .x(function(d) { return x(d.Date); })
+        .y(function(d) { return y(d.CUI3); });
+
+    var c4Line = d3.svg.line()
+        .x(function(d) { return x(d.Date); })
+        .y(function(d) { return y(d.CUI4); });
+
+    var c5Line = d3.svg.line()
+        .x(function(d) { return x(d.Date); })
+        .y(function(d) { return y(d.CUI5); });
+
+    // Adds the svg canvas
+    var svg = d3.select("#graphDiv")
+      .append("svg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight)
+      .append("g")
+        .attr("transform", 
+        "translate(" + margin.left + "," + margin.top + ")")
+
+    // define function
+    function draw(data) {
+      data.forEach(function(d) {
+        d.Date = parseDate(d.Date);
+        d.CUI1 = +d.CUI1;
+        d.CUI2 = +d.CUI2;
+        d.CUI3 = +d.CUI3;
+        d.CUI4 = +d.CUI4;
+        d.CUI5 = +d.CUI5;
+        // d.High = +d.High;
+        // d.Close = +d.Close;
+        // d.Low = +d.Low;
+      });
+      // Scale the range of the data
+      x.domain(d3.extent(data, function(d) { return d.Date; }));
+      y.domain([d3.min(data, function(d) {
+          return Math.min(d.CUI1, d.CUI2, d.CUI3, d.CUI4, d.CUI5) }),
+          d3.max(data, function(d) {
+          return Math.max(d.CUI1, d.CUI2, d.CUI3, d.CUI4, d.CUI5) })]);
+    //   // Add the area path.
+    //   svg.append("path")
+    //     .datum(data)
+    //     .attr("class", "area")
+    //     .attr("d", area)
+      // Add the 2 valueline paths.
+      svg.append("path")
+        .style("stroke", "green")
+        .style("fill", "none")
+        .attr("class", "line")
+        .attr("d", c1Line(data));
+      svg.append("path")
+        .style("stroke", "blue")
+        .style("fill", "none")
+        .attr("class", "line")
+        .attr("d", c2Line(data));
+        svg.append("path")
+        .style("stroke", "red")
+        .style("fill", "none")
+        .attr("class", "line")
+        .attr("d", c3Line(data));
+        svg.append("path")
+        .style("stroke", "yellow")
+        .style("fill", "none")
+        .attr("class", "line")
+        .attr("d", c4Line(data));
+        svg.append("path")
+        .style("stroke", "purple")
+        .style("fill", "none")
+        .attr("class", "line")
+        .attr("d", c5Line(data));
+      // Add the X Axis
+      svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + graphHeight + ")")
+          .call(xAxis);
+      // Add the Y Axis
+      svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+      svg.append("text")
+        .attr("transform", "translate("+(graphWidth+3)+","+y(graphData[0].CUI1)+")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "green")
+        .text(graphData[0].CUI1Label);
+      svg.append("text")
+        .attr("transform", "translate("+(graphWidth+3)+","+y(graphData[0].CUI2)+")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "blue")
+        .text(graphData[0].CUI2Label);
+        svg.append("text")
+        .attr("transform", "translate("+(graphWidth+3)+","+y(graphData[0].CUI3)+")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "red")
+        .text(graphData[0].CUI3Label);
+        svg.append("text")
+        .attr("transform", "translate("+(graphWidth+3)+","+y(graphData[0].CUI4)+")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "yellow")
+        .text(graphData[0].CUI4Label);
+        svg.append("text")
+        .attr("transform", "translate("+(graphWidth+3)+","+y(graphData[0].CUI5)+")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "purple")
+        .text(graphData[0].CUI5Label);
+    };
+
+draw(graphData);
+
+</script>
+</body>
+</html>
